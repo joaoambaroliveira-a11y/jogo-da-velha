@@ -12,59 +12,67 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             color: white;
+            overflow: hidden;
         }
 
         h1 {
-            margin-bottom: 20px;
-            font-size: 2.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            letter-spacing: 1px;
         }
 
         .status {
-            font-size: 1.4rem;
-            margin-bottom: 25px;
-            padding: 10px 20px;
-            background: rgba(255,255,255,0.15);
-            border-radius: 10px;
-            backdrop-filter: blur(5px);
+            font-size: 1.35rem;
+            margin-bottom: 30px;
+            padding: 12px 28px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 50px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.15);
+            min-width: 260px;
+            text-align: center;
+            transition: all 0.3s ease;
         }
 
         .board {
             display: grid;
-            grid-template-columns: repeat(3, 100px);
-            grid-template-rows: repeat(3, 100px);
-            gap: 8px;
-            background: rgba(255,255,255,0.2);
-            padding: 10px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            grid-template-columns: repeat(3, 110px);
+            grid-template-rows: repeat(3, 110px);
+            gap: 12px;
+            background: rgba(255,255,255,0.08);
+            padding: 14px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.35);
         }
 
         .cell {
-            background: white;
-            border-radius: 12px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3rem;
-            font-weight: bold;
+            font-size: 3.4rem;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease;
-            color: #333;
+            color: #222;
             user-select: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .cell:hover:not(.taken) {
-            background: #f0f0f0;
-            transform: scale(1.05);
+            background: #ffffff;
+            transform: scale(1.06);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
 
         .cell.x {
@@ -76,41 +84,47 @@
         }
 
         .cell.taken {
-            cursor: not-allowed;
+            cursor: default;
+        }
+
+        .winning-cell {
+            background: #f1c40f !important;
+            animation: pulse 0.5s ease;
+            box-shadow: 0 0 20px rgba(241, 196, 15, 0.6);
+        }
+
+        @keyframes pulse {
+            0%   { transform: scale(1); }
+            50%  { transform: scale(1.12); }
+            100% { transform: scale(1); }
         }
 
         .controls {
-            margin-top: 30px;
+            margin-top: 35px;
         }
 
         button {
             background: #2ecc71;
             color: white;
             border: none;
-            padding: 12px 30px;
-            font-size: 1.1rem;
+            padding: 14px 36px;
+            font-size: 1.15rem;
             border-radius: 50px;
             cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-weight: 600;
+            transition: all 0.25s ease;
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
         }
 
         button:hover {
             background: #27ae60;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(46, 204, 113, 0.5);
         }
 
-        .winning-cell {
-            background: #f1c40f !important;
-            animation: pulse 0.6s ease;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+        .draw-message {
+            color: #f1c40f;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -131,7 +145,7 @@
     </div>
 
     <div class="controls">
-        <button onclick="resetGame()">Reiniciar Jogo</button>
+        <button onclick="resetGame()">Reiniciar</button>
     </div>
 
     <script>
@@ -140,16 +154,12 @@
         let board = ['', '', '', '', '', '', '', '', ''];
         let currentPlayer = 'X';
         let gameActive = true;
+        let autoRestartTimeout = null;
 
         const winningConditions = [
-            [0, 1, 2],
-            [3, 4, 5],
-            [6, 7, 8],
-            [0, 3, 6],
-            [1, 4, 7],
-            [2, 5, 8],
-            [0, 4, 8],
-            [2, 4, 6]
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
         ];
 
         function handleCellClick(e) {
@@ -168,9 +178,15 @@
                 return;
             }
 
+            // Verifica se deu velha
             if (board.every(cell => cell !== '')) {
-                statusDisplay.innerHTML = `Empate! 🤝`;
+                statusDisplay.innerHTML = `<span class="draw-message">Deu velha! 🤝</span><br><small>Reiniciando em 2 segundos...</small>`;
                 gameActive = false;
+
+                // Reinicia automaticamente após 2 segundos
+                autoRestartTimeout = setTimeout(() => {
+                    resetGame();
+                }, 2000);
                 return;
             }
 
@@ -182,7 +198,6 @@
             for (let condition of winningConditions) {
                 const [a, b, c] = condition;
                 if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-                    // Destaca as células vencedoras
                     cells[a].classList.add('winning-cell');
                     cells[b].classList.add('winning-cell');
                     cells[c].classList.add('winning-cell');
@@ -193,6 +208,12 @@
         }
 
         function resetGame() {
+            // Limpa o timeout caso o jogador clique em reiniciar antes
+            if (autoRestartTimeout) {
+                clearTimeout(autoRestartTimeout);
+                autoRestartTimeout = null;
+            }
+
             board = ['', '', '', '', '', '', '', '', ''];
             currentPlayer = 'X';
             gameActive = true;
