@@ -1,654 +1,159 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo da Velha</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4x4 - Jogo com Amigos</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            padding: 20px;
-        }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: #fff;
+    }
 
-        h1 {
-            font-size: 2.3rem;
-            margin-bottom: 16px;
-            text-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
+    h1 {
+      margin-bottom: 30px;
+      font-size: 2rem;
+      letter-spacing: 1px;
+    }
 
-        /* Seleção de Modo */
-        .mode-selector {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
+    .players {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
 
-        .mode-btn {
-            padding: 11px 24px;
-            border: none;
-            border-radius: 50px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            background: rgba(255,255,255,0.15);
-            color: white;
-            transition: all 0.25s ease;
-            border: 2px solid transparent;
-        }
+    .player {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
 
-        .mode-btn:hover {
-            background: rgba(255,255,255,0.25);
-        }
+    .player label {
+      font-size: 0.95rem;
+      opacity: 0.8;
+    }
 
-        .mode-btn.active {
-            background: #3498db;
-            border-color: #2980b9;
-            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
-        }
+    .player input {
+      padding: 12px 18px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 10px;
+      background: #0f3460;
+      color: #fff;
+      text-align: center;
+      width: 180px;
+      outline: none;
+      transition: 0.2s;
+    }
 
-        .players {
-            display: flex;
-            gap: 18px;
-            margin-bottom: 14px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
+    .player input:focus {
+      background: #1a4b8c;
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.2);
+    }
 
-        .player-input {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-        }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      background: #0f3460;
+      padding: 16px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
 
-        .player-input label {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
+    .cell {
+      width: 90px;
+      height: 90px;
+      background: #e94560;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: white;
+      user-select: none;
+    }
 
-        .player-input input {
-            padding: 9px 14px;
-            border-radius: 50px;
-            border: none;
-            font-size: 0.95rem;
-            width: 150px;
-            text-align: center;
-            background: rgba(255,255,255,0.95);
-            color: #222;
-            outline: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
+    .cell:hover {
+      transform: scale(1.05);
+      background: #ff6b81;
+    }
 
-        .player-input input:disabled {
-            background: rgba(255,255,255,0.5);
-            color: #555;
-            cursor: not-allowed;
-        }
+    .cell:active {
+      transform: scale(0.95);
+    }
 
-        .difficulty {
-            display: none;
-            gap: 10px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .difficulty.show {
-            display: flex;
-        }
-
-        .diff-btn {
-            padding: 9px 20px;
-            border: none;
-            border-radius: 50px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            background: rgba(255,255,255,0.15);
-            color: white;
-            transition: all 0.25s ease;
-            border: 2px solid transparent;
-        }
-
-        .diff-btn:hover {
-            background: rgba(255,255,255,0.25);
-        }
-
-        .diff-btn.active {
-            background: #2ecc71;
-            border-color: #27ae60;
-            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
-        }
-
-        .status {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            padding: 11px 26px;
-            background: rgba(255,255,255,0.12);
-            border-radius: 50px;
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.15);
-            min-width: 260px;
-            text-align: center;
-        }
-
-        /* Área principal: tabuleiro + placar */
-        .game-area {
-            display: flex;
-            gap: 30px;
-            align-items: flex-start;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .board {
-            display: grid;
-            grid-template-columns: repeat(3, 105px);
-            grid-template-rows: repeat(3, 105px);
-            gap: 11px;
-            background: rgba(255,255,255,0.08);
-            padding: 13px;
-            border-radius: 18px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.35);
-        }
-
-        .cell {
-            background: rgba(255,255,255,0.95);
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3.2rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            color: #222;
-            user-select: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .cell:hover:not(.taken) {
-            background: #ffffff;
-            transform: scale(1.06);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-        }
-
-        .cell.x { color: #e74c3c; }
-        .cell.o { color: #3498db; }
-        .cell.taken { cursor: default; }
-
-        .winning-cell {
-            background: #f1c40f !important;
-            animation: pulse 0.5s ease;
-            box-shadow: 0 0 20px rgba(241, 196, 15, 0.6);
-        }
-
-        @keyframes pulse {
-            0%   { transform: scale(1); }
-            50%  { transform: scale(1.12); }
-            100% { transform: scale(1); }
-        }
-
-        /* Placar */
-        .scoreboard {
-            background: rgba(255,255,255,0.12);
-            border-radius: 18px;
-            padding: 20px 24px;
-            min-width: 180px;
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.15);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-            text-align: center;
-        }
-
-        .scoreboard h3 {
-            font-size: 1.15rem;
-            margin-bottom: 18px;
-            opacity: 0.95;
-        }
-
-        .score-item {
-            background: rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 14px 10px;
-            margin-bottom: 12px;
-        }
-
-        .score-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .score-name {
-            font-size: 0.95rem;
-            margin-bottom: 6px;
-            opacity: 0.9;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 140px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .score-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #f1c40f;
-        }
-
-        .score-x .score-value { color: #e74c3c; }
-        .score-o .score-value { color: #3498db; }
-
-        .controls {
-            margin-top: 26px;
-            display: flex;
-            gap: 14px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        button {
-            border: none;
-            padding: 13px 28px;
-            font-size: 1.05rem;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.25s ease;
-        }
-
-        button.reset {
-            background: #2ecc71;
-            color: white;
-            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
-        }
-
-        button.reset:hover {
-            background: #27ae60;
-            transform: translateY(-3px);
-        }
-
-        button.clear-score {
-            background: rgba(255,255,255,0.15);
-            color: white;
-            border: 2px solid rgba(255,255,255,0.3);
-        }
-
-        button.clear-score:hover {
-            background: rgba(255,255,255,0.25);
-        }
-
-        .draw-message {
-            color: #f1c40f;
-            font-weight: 600;
-        }
-
-        @media (max-width: 600px) {
-            .game-area {
-                flex-direction: column;
-                align-items: center;
-            }
-            .scoreboard {
-                order: -1;
-                width: 100%;
-                max-width: 320px;
-                margin-bottom: 10px;
-            }
-        }
-    </style>
+    @media (max-width: 500px) {
+      .cell {
+        width: 70px;
+        height: 70px;
+        font-size: 1.8rem;
+      }
+    }
+  </style>
 </head>
 <body>
-    <h1>Jogo da Velha</h1>
 
-    <div class="mode-selector">
-        <button class="mode-btn active" data-mode="friends">👥 Com Amigos</button>
-        <button class="mode-btn" data-mode="ai">🤖 Contra o Robô</button>
+  <h1>4 × 4</h1>
+
+  <div class="players">
+    <div class="player">
+      <label>Jogador 1</label>
+      <input type="text" placeholder="Nome do jogador 1" id="p1">
     </div>
-
-    <div class="players">
-        <div class="player-input">
-            <label>Jogador X</label>
-            <input type="text" id="playerX" value="Jogador X" maxlength="12">
-        </div>
-        <div class="player-input">
-            <label>Jogador O</label>
-            <input type="text" id="playerO" value="Jogador O" maxlength="12">
-        </div>
+    <div class="player">
+      <label>Jogador 2</label>
+      <input type="text" placeholder="Nome do jogador 2" id="p2">
     </div>
+  </div>
 
-    <div class="difficulty" id="difficulty">
-        <button class="diff-btn active" data-level="easy">Fácil</button>
-        <button class="diff-btn" data-level="medium">Médio</button>
-        <button class="diff-btn" data-level="hard">Difícil</button>
-    </div>
+  <div class="board" id="board">
+    <!-- 16 células 4x4 -->
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+  </div>
 
-    <div class="status" id="status">Vez de: <strong>Jogador X</strong></div>
-    
-    <div class="game-area">
-        <!-- Tabuleiro -->
-        <div class="board" id="board">
-            <div class="cell" data-index="0"></div>
-            <div class="cell" data-index="1"></div>
-            <div class="cell" data-index="2"></div>
-            <div class="cell" data-index="3"></div>
-            <div class="cell" data-index="4"></div>
-            <div class="cell" data-index="5"></div>
-            <div class="cell" data-index="6"></div>
-            <div class="cell" data-index="7"></div>
-            <div class="cell" data-index="8"></div>
-        </div>
-
-        <!-- Placar -->
-        <div class="scoreboard">
-            <h3>🏆 Placar</h3>
-            <div class="score-item score-x">
-                <div class="score-name" id="scoreNameX">Jogador X</div>
-                <div class="score-value" id="scoreX">0</div>
-            </div>
-            <div class="score-item score-o">
-                <div class="score-name" id="scoreNameO">Jogador O</div>
-                <div class="score-value" id="scoreO">0</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="controls">
-        <button class="reset" onclick="resetGame()">Reiniciar</button>
-        <button class="clear-score" onclick="clearScore()">Zerar Placar</button>
-    </div>
-
-    <script>
-        const cells = document.querySelectorAll('.cell');
-        const statusDisplay = document.getElementById('status');
-        const inputX = document.getElementById('playerX');
-        const inputO = document.getElementById('playerO');
-        const difficultyDiv = document.getElementById('difficulty');
-        const modeButtons = document.querySelectorAll('.mode-btn');
-        const diffButtons = document.querySelectorAll('.diff-btn');
-        const scoreXEl = document.getElementById('scoreX');
-        const scoreOEl = document.getElementById('scoreO');
-        const scoreNameX = document.getElementById('scoreNameX');
-        const scoreNameO = document.getElementById('scoreNameO');
-
-        let board = ['', '', '', '', '', '', '', '', ''];
-        let currentPlayer = 'X';
-        let gameActive = true;
-        let gameMode = 'friends';
-        let difficulty = 'easy';
-        let autoRestartTimeout = null;
-        let computerThinking = false;
-
-        let scoreX = 0;
-        let scoreO = 0;
-
-        const winningConditions = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8],
-            [0, 3, 6], [1, 4, 7], [2, 5, 8],
-            [0, 4, 8], [2, 4, 6]
-        ];
-
-        // ===== Modo =====
-        modeButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                modeButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                gameMode = btn.dataset.mode;
-
-                if (gameMode === 'ai') {
-                    difficultyDiv.classList.add('show');
-                    inputO.value = 'Computador';
-                    inputO.disabled = true;
-                } else {
-                    difficultyDiv.classList.remove('show');
-                    inputO.value = 'Jogador O';
-                    inputO.disabled = false;
-                }
-                updateScoreNames();
-                resetGame();
-            });
-        });
-
-        // ===== Dificuldade =====
-        diffButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                diffButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                difficulty = btn.dataset.level;
-                resetGame();
-            });
-        });
-
-        function getPlayerName(symbol) {
-            return symbol === 'X' 
-                ? (inputX.value.trim() || 'Jogador X') 
-                : (inputO.value.trim() || 'Jogador O');
-        }
-
-        function updateScoreNames() {
-            scoreNameX.textContent = getPlayerName('X');
-            scoreNameO.textContent = getPlayerName('O');
-        }
-
-        function handleCellClick(e) {
-            if (!gameActive || computerThinking) return;
-            if (gameMode === 'ai' && currentPlayer !== 'X') return;
-
-            const cell = e.target;
-            const index = parseInt(cell.getAttribute('data-index'));
-            if (board[index] !== '') return;
-
-            makeMove(index, currentPlayer);
-
-            if (!gameActive) return;
-
-            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-
-            if (gameMode === 'ai' && currentPlayer === 'O') {
-                statusDisplay.innerHTML = `Vez de: <strong>${getPlayerName('O')}</strong>...`;
-                computerThinking = true;
-                setTimeout(() => {
-                    computerMove();
-                    computerThinking = false;
-                }, 550);
-            } else {
-                statusDisplay.innerHTML = `Vez de: <strong>${getPlayerName(currentPlayer)}</strong>`;
-            }
-        }
-
-        function makeMove(index, player) {
-            board[index] = player;
-            cells[index].textContent = player;
-            cells[index].classList.add(player.toLowerCase(), 'taken');
-
-            if (checkWin(player)) {
-                const winnerName = getPlayerName(player);
-                statusDisplay.innerHTML = `<strong>${winnerName}</strong> venceu! 🎉`;
-                gameActive = false;
-
-                // Atualiza placar
-                if (player === 'X') {
-                    scoreX++;
-                    scoreXEl.textContent = scoreX;
-                } else {
-                    scoreO++;
-                    scoreOEl.textContent = scoreO;
-                }
-                return true;
-            }
-
-            if (board.every(cell => cell !== '')) {
-                statusDisplay.innerHTML = `<span class="draw-message">Deu velha! 🤝</span><br><small>Reiniciando em 2 segundos...</small>`;
-                gameActive = false;
-                autoRestartTimeout = setTimeout(() => resetGame(), 2000);
-                return true;
-            }
-            return false;
-        }
-
-        function checkWin(player) {
-            for (let condition of winningConditions) {
-                const [a, b, c] = condition;
-                if (board[a] === player && board[b] === player && board[c] === player) {
-                    cells[a].classList.add('winning-cell');
-                    cells[b].classList.add('winning-cell');
-                    cells[c].classList.add('winning-cell');
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        // ==================== IA ====================
-        function computerMove() {
-            if (!gameActive) return;
-            let move;
-            if (difficulty === 'easy') move = getRandomMove();
-            else if (difficulty === 'medium') move = getMediumMove();
-            else move = getBestMove();
-
-            if (move !== null) {
-                const ended = makeMove(move, 'O');
-                if (!ended) {
-                    currentPlayer = 'X';
-                    statusDisplay.innerHTML = `Vez de: <strong>${getPlayerName('X')}</strong>`;
-                }
-            }
-        }
-
-        function getRandomMove() {
-            const empty = board.map((v, i) => v === '' ? i : null).filter(v => v !== null);
-            return empty.length ? empty[Math.floor(Math.random() * empty.length)] : null;
-        }
-
-        function getMediumMove() {
-            for (let i = 0; i < 9; i++) {
-                if (board[i] === '') {
-                    board[i] = 'O';
-                    if (checkWinForMinimax('O')) { board[i] = ''; return i; }
-                    board[i] = '';
-                }
-            }
-            for (let i = 0; i < 9; i++) {
-                if (board[i] === '') {
-                    board[i] = 'X';
-                    if (checkWinForMinimax('X')) { board[i] = ''; return i; }
-                    board[i] = '';
-                }
-            }
-            return getRandomMove();
-        }
-
-        function getBestMove() {
-            let bestScore = -Infinity;
-            let bestMove = null;
-            for (let i = 0; i < 9; i++) {
-                if (board[i] === '') {
-                    board[i] = 'O';
-                    let score = minimax(board, 0, false);
-                    board[i] = '';
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestMove = i;
-                    }
-                }
-            }
-            return bestMove;
-        }
-
-        function minimax(boardState, depth, isMaximizing) {
-            if (checkWinForMinimax('O')) return 10 - depth;
-            if (checkWinForMinimax('X')) return depth - 10;
-            if (boardState.every(cell => cell !== '')) return 0;
-
-            if (isMaximizing) {
-                let bestScore = -Infinity;
-                for (let i = 0; i < 9; i++) {
-                    if (boardState[i] === '') {
-                        boardState[i] = 'O';
-                        let score = minimax(boardState, depth + 1, false);
-                        boardState[i] = '';
-                        bestScore = Math.max(score, bestScore);
-                    }
-                }
-                return bestScore;
-            } else {
-                let bestScore = Infinity;
-                for (let i = 0; i < 9; i++) {
-                    if (boardState[i] === '') {
-                        boardState[i] = 'X';
-                        let score = minimax(boardState, depth + 1, true);
-                        boardState[i] = '';
-                        bestScore = Math.min(score, bestScore);
-                    }
-                }
-                return bestScore;
-            }
-        }
-
-        function checkWinForMinimax(player) {
-            return winningConditions.some(([a, b, c]) => board[a] === player && board[b] === player && board[c] === player);
-        }
-
-        // ====================================================================
-
-        function resetGame() {
-            if (autoRestartTimeout) {
-                clearTimeout(autoRestartTimeout);
-                autoRestartTimeout = null;
-            }
-            board = ['', '', '', '', '', '', '', '', ''];
-            currentPlayer = 'X';
-            gameActive = true;
-            computerThinking = false;
-            statusDisplay.innerHTML = `Vez de: <strong>${getPlayerName('X')}</strong>`;
-            cells.forEach(cell => {
-                cell.textContent = '';
-                cell.classList.remove('x', 'o', 'taken', 'winning-cell');
-            });
-            updateScoreNames();
-        }
-
-        function clearScore() {
-            scoreX = 0;
-            scoreO = 0;
-            scoreXEl.textContent = '0';
-            scoreOEl.textContent = '0';
-        }
-
-        // Atualiza nomes no placar quando digitar
-        inputX.addEventListener('input', () => {
-            updateScoreNames();
-            if (gameActive && currentPlayer === 'X') {
-                statusDisplay.innerHTML = `Vez de: <strong>${getPlayerName('X')}</strong>`;
-            }
-        });
-
-        inputO.addEventListener('input', () => {
-            updateScoreNames();
-            if (gameActive && currentPlayer === 'O' && gameMode === 'friends') {
-                statusDisplay.innerHTML = `Vez de: <strong>${getPlayerName('O')}</strong>`;
-            }
-        });
-
-        cells.forEach(cell => cell.addEventListener('click', handleCellClick));
-
-        // Inicializa
-        updateScoreNames();
-    </script>
 </body>
 </html>
