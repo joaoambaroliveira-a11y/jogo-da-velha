@@ -24,15 +24,47 @@
         }
 
         h1 {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
+            font-size: 2.4rem;
+            margin-bottom: 18px;
             text-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        /* Seleção de Modo */
+        .mode-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            padding: 12px 26px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            transition: all 0.25s ease;
+            border: 2px solid transparent;
+        }
+
+        .mode-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .mode-btn.active {
+            background: #3498db;
+            border-color: #2980b9;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
         }
 
         .players {
             display: flex;
             gap: 20px;
-            margin-bottom: 18px;
+            margin-bottom: 16px;
             flex-wrap: wrap;
             justify-content: center;
         }
@@ -62,12 +94,23 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
+        .player-input input:disabled {
+            background: rgba(255,255,255,0.5);
+            color: #555;
+            cursor: not-allowed;
+        }
+
+        /* Dificuldade */
         .difficulty {
-            display: flex;
+            display: none;
             gap: 10px;
-            margin-bottom: 22px;
+            margin-bottom: 20px;
             flex-wrap: wrap;
             justify-content: center;
+        }
+
+        .difficulty.show {
+            display: flex;
         }
 
         .diff-btn {
@@ -95,7 +138,7 @@
 
         .status {
             font-size: 1.25rem;
-            margin-bottom: 25px;
+            margin-bottom: 22px;
             padding: 12px 28px;
             background: rgba(255,255,255,0.12);
             border-radius: 50px;
@@ -162,7 +205,7 @@
         }
 
         .controls {
-            margin-top: 30px;
+            margin-top: 28px;
         }
 
         button.reset {
@@ -193,24 +236,31 @@
 <body>
     <h1>Jogo da Velha</h1>
 
+    <!-- Seleção de Modo -->
+    <div class="mode-selector">
+        <button class="mode-btn active" data-mode="friends">👥 Com Amigos</button>
+        <button class="mode-btn" data-mode="ai">🤖 Contra o Robô</button>
+    </div>
+
     <div class="players">
         <div class="player-input">
-            <label>Seu nome (X)</label>
-            <input type="text" id="playerX" value="Você" maxlength="12">
+            <label>Jogador X</label>
+            <input type="text" id="playerX" value="Jogador X" maxlength="12">
         </div>
         <div class="player-input">
-            <label>Computador (O)</label>
-            <input type="text" id="playerO" value="Computador" maxlength="12" disabled>
+            <label>Jogador O</label>
+            <input type="text" id="playerO" value="Jogador O" maxlength="12">
         </div>
     </div>
 
-    <div class="difficulty">
+    <!-- Dificuldade (só aparece no modo Robô) -->
+    <div class="difficulty" id="difficulty">
         <button class="diff-btn active" data-level="easy">Fácil</button>
         <button class="diff-btn" data-level="medium">Médio</button>
         <button class="diff-btn" data-level="hard">Difícil</button>
     </div>
 
-    <div class="status" id="status">Vez de: <strong>Você</strong></div>
+    <div class="status" id="status">Vez de: <strong>Jogador X</strong></div>
     
     <div class="board" id="board">
         <div class="cell" data-index="0"></div>
@@ -233,11 +283,14 @@
         const statusDisplay = document.getElementById('status');
         const inputX = document.getElementById('playerX');
         const inputO = document.getElementById('playerO');
+        const difficultyDiv = document.getElementById('difficulty');
+        const modeButtons = document.querySelectorAll('.mode-btn');
         const diffButtons = document.querySelectorAll('.diff-btn');
 
         let board = ['', '', '', '', '', '', '', '', ''];
         let currentPlayer = 'X';
         let gameActive = true;
+        let gameMode = 'friends'; // 'friends' ou 'ai'
         let difficulty = 'easy';
         let autoRestartTimeout = null;
         let computerThinking = false;
@@ -248,7 +301,28 @@
             [0, 4, 8], [2, 4, 6]
         ];
 
-        // Seleção de dificuldade
+        // ===== Seleção de Modo =====
+        modeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                modeButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                gameMode = btn.dataset.mode;
+
+                if (gameMode === 'ai') {
+                    difficultyDiv.classList.add('show');
+                    inputO.value = 'Computador';
+                    inputO.disabled = true;
+                } else {
+                    difficultyDiv.classList.remove('show');
+                    inputO.value = 'Jogador O';
+                    inputO.disabled = false;
+                }
+
+                resetGame();
+            });
+        });
+
+        // ===== Seleção de Dificuldade =====
         diffButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 diffButtons.forEach(b => b.classList.remove('active'));
@@ -260,31 +334,39 @@
 
         function getPlayerName(symbol) {
             return symbol === 'X' 
-                ? (inputX.value.trim() || 'Você') 
-                : (inputO.value.trim() || 'Computador');
+                ? (inputX.value.trim() || 'Jogador X') 
+                : (inputO.value.trim() || 'Jogador O');
         }
 
         function handleCellClick(e) {
-            if (computerThinking || !gameActive || currentPlayer !== 'X') return;
+            if (!gameActive || computerThinking) return;
+
+            // No modo AI, só permite clicar quando for a vez do X
+            if (gameMode === 'ai' && currentPlayer !== 'X') return;
 
             const cell = e.target;
             const index = parseInt(cell.getAttribute('data-index'));
 
             if (board[index] !== '') return;
 
-            makeMove(index, 'X');
+            makeMove(index, currentPlayer);
 
             if (!gameActive) return;
 
-            // Vez do computador
-            currentPlayer = 'O';
-            statusDisplay.innerHTML = `Vez de: <strong>${getPlayerName('O')}</strong>...`;
-            computerThinking = true;
+            // Alterna o jogador
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
 
-            setTimeout(() => {
-                computerMove();
-                computerThinking = false;
-            }, 600);
+            if (gameMode === 'ai' && currentPlayer === 'O') {
+                statusDisplay.innerHTML = `Vez de: <strong>${getPlayerName('O')}</strong>...`;
+                computerThinking = true;
+
+                setTimeout(() => {
+                    computerMove();
+                    computerThinking = false;
+                }, 550);
+            } else {
+                statusDisplay.innerHTML = `Vez de: <strong>${getPlayerName(currentPlayer)}</strong>`;
+            }
         }
 
         function makeMove(index, player) {
@@ -296,7 +378,7 @@
                 const winnerName = getPlayerName(player);
                 statusDisplay.innerHTML = `<strong>${winnerName}</strong> venceu! 🎉`;
                 gameActive = false;
-                return;
+                return true;
             }
 
             if (board.every(cell => cell !== '')) {
@@ -306,15 +388,10 @@
                 autoRestartTimeout = setTimeout(() => {
                     resetGame();
                 }, 2000);
-                return;
+                return true;
             }
 
-            if (player === 'X') {
-                // Não atualiza status ainda, pois vai ser a vez do computador
-            } else {
-                currentPlayer = 'X';
-                statusDisplay.innerHTML = `Vez de: <strong>${getPlayerName('X')}</strong>`;
-            }
+            return false;
         }
 
         function checkWin(player) {
@@ -342,23 +419,25 @@
             } else if (difficulty === 'medium') {
                 move = getMediumMove();
             } else {
-                move = getBestMove(); // Difícil (Minimax)
+                move = getBestMove();
             }
 
             if (move !== null) {
-                makeMove(move, 'O');
+                const ended = makeMove(move, 'O');
+                if (!ended) {
+                    currentPlayer = 'X';
+                    statusDisplay.innerHTML = `Vez de: <strong>${getPlayerName('X')}</strong>`;
+                }
             }
         }
 
-        // Fácil: joga aleatório
         function getRandomMove() {
             const empty = board.map((v, i) => v === '' ? i : null).filter(v => v !== null);
-            return empty[Math.floor(Math.random() * empty.length)];
+            return empty.length ? empty[Math.floor(Math.random() * empty.length)] : null;
         }
 
-        // Médio: ganha se puder, bloqueia se precisar, senão aleatório
         function getMediumMove() {
-            // 1. Tenta ganhar
+            // Tenta ganhar
             for (let i = 0; i < 9; i++) {
                 if (board[i] === '') {
                     board[i] = 'O';
@@ -369,8 +448,7 @@
                     board[i] = '';
                 }
             }
-
-            // 2. Bloqueia o jogador
+            // Bloqueia o jogador
             for (let i = 0; i < 9; i++) {
                 if (board[i] === '') {
                     board[i] = 'X';
@@ -381,12 +459,9 @@
                     board[i] = '';
                 }
             }
-
-            // 3. Aleatório
             return getRandomMove();
         }
 
-        // Difícil: Minimax (joga perfeitamente)
         function getBestMove() {
             let bestScore = -Infinity;
             let bestMove = null;
@@ -461,9 +536,16 @@
             });
         }
 
+        // Atualiza status se mudar o nome
         inputX.addEventListener('input', () => {
             if (gameActive && currentPlayer === 'X') {
                 statusDisplay.innerHTML = `Vez de: <strong>${getPlayerName('X')}</strong>`;
+            }
+        });
+
+        inputO.addEventListener('input', () => {
+            if (gameActive && currentPlayer === 'O' && gameMode === 'friends') {
+                statusDisplay.innerHTML = `Vez de: <strong>${getPlayerName('O')}</strong>`;
             }
         });
 
